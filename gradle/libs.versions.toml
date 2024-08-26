@@ -21,6 +21,7 @@ rangVikalp = "1.0.0-alpha02"
 splashScreen = "1.0.1"
 firebaseBom = "33.1.2"
 coil = "2.6.0"
+shapes = "1.0.0-rc01"
 
 espressoCore = "3.6.1"
 junit = "4.13.2"
@@ -39,6 +40,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "shapes" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
