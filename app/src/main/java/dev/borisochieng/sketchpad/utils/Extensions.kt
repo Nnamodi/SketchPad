@@ -45,7 +45,7 @@ object Extensions {
         return String.format("#%08x", argb)
     }
 
-    fun <T> List<T>.transformList(): List<List<T>> {
+    fun <T> List<T>.transformList(rowCount: Int = 4): List<List<T>> {
         var i = 0
         val list = mutableListOf<List<T>>()
         while (i < size) {
@@ -57,12 +57,12 @@ object Extensions {
             if (i + 2 < size) {
                 tList.add(this[i + 2])
             }
-            if (i + 3 < size) {
+            if (i + 3 < size && rowCount == 4) {
                 tList.add(this[i + 3])
             }
             list.add(tList.toList())
             i += when {
-                i + 3 < size -> 4
+                i + 3 < size && rowCount == 4 -> 4
                 i + 2 < size -> 3
                 i + 1 < size -> 2
                 else -> 1

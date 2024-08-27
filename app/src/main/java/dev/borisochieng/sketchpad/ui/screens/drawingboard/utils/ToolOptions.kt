@@ -1,7 +1,7 @@
 package dev.borisochieng.sketchpad.ui.screens.drawingboard.utils
 
 enum class DrawMode {
-	Draw, Erase, Touch, Text
+	Draw, Erase, Shape, Text, Touch
 }
 
 // Enum to represent export options

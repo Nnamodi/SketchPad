@@ -52,11 +52,14 @@ import dev.borisochieng.sketchpad.ui.screens.dialog.SavePromptDialog
 import dev.borisochieng.sketchpad.ui.screens.dialog.Sizes
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.chat.ChatDialog
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.components.MovableTextBox
+import dev.borisochieng.sketchpad.ui.screens.drawingboard.components.MoveableShapeBox
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.components.PaletteMenu
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.components.PaletteTopBar
+import dev.borisochieng.sketchpad.ui.screens.drawingboard.components.ShapeOptions
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.CanvasUiEvents
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.CanvasUiState
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.PathProperties
+import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.ShapeProperties
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.SketchPadActions
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.TextProperties
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.utils.DrawMode
@@ -81,7 +84,6 @@ fun DrawingBoard(
     isFromCollabUrl: Boolean
 ) {
     val (userIsLoggedIn, _, _, _, sketch, collabUrl) = uiState
-//    var currentTextInput by remember { mutableStateOf(TextInput()) }
     val drawController = rememberDrawController()
     var drawMode by remember { mutableStateOf(DrawMode.Draw) }
     var exportOption by remember { mutableStateOf(ExportOption.PNG) }
@@ -93,12 +95,13 @@ fun DrawingBoard(
     var texts by remember { mutableStateOf<List<TextProperties>>(emptyList()) }
     val showNewTextBox = remember { mutableStateOf(false) }
 
+    val newShapeBox = remember { mutableStateOf<ShapeOptions?>(null) }
+
     var pencilSize by remember { mutableFloatStateOf(Sizes.Small.strokeWidth) }
     var color by remember { mutableStateOf(Color.Black) }
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
-    val chatEnabled = remember { mutableStateOf(false) }
     val chatVisible = remember { mutableStateOf(false) }
     val isExport = remember { mutableStateOf(false) }
 
@@ -199,10 +202,9 @@ fun DrawingBoard(
                     paths += nextPath
                 },
                 onExportClicked = {
-
                     drawController.saveBitmap()
                     isExport.value = false
-                                  },
+                },
                 onBroadCastUrl = {
                     if (userIsLoggedIn) {
                         sketch?.let {
@@ -225,12 +227,11 @@ fun DrawingBoard(
                     }
                 },
                 onExportClickedAsPdf = {
-
                     exportOption = ExportOption.PDF
                     drawController.saveBitmap()
                     isExport.value = false
                 },
-                expanded = { value ->
+                menuExpanded = { value ->
                     isExport.value = value
                 }
 
@@ -242,18 +243,17 @@ fun DrawingBoard(
                 selectedColor = color,
                 pencilSize = pencilSize,
                 onColorChanged = { color = it },
+                onShapePicked = { newShapeBox.value = it },
                 onSizeChanged = { pencilSize = it },
                 onDrawModeChanged = {
                     drawMode = it
                     if (it == DrawMode.Text) showNewTextBox.value = true
-                },
-                chatEnabled = { chatEnabled.value = !chatEnabled.value }
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.White,
         floatingActionButton = {
-
             if (userIsLoggedIn && isFromCollabUrl&& !isExport.value) {
                 FloatingActionButton(
                     onClick = { chatVisible.value = true },
@@ -417,6 +417,19 @@ fun DrawingBoard(
                                         }
                                     )
                                 }
+
+                                if (newShapeBox.value != null) {
+                                    MoveableShapeBox(
+                                        properties = ShapeProperties(shape = newShapeBox.value!!),
+                                        active = true,
+                                        onRemove = { newShapeBox.value = null },
+                                        onFinish = { newShapeBox.value = null }
+                                    )
+                                }
+
+                                LaunchedEffect(newShapeBox.value) {
+                                    drawMode = if (newShapeBox.value == null) DrawMode.Draw else DrawMode.Shape
+                                }
                             }
                         }
                     }
@@ -469,13 +482,3 @@ fun DrawingBoard(
         )
     }
 }
-
-//data class TextInput(
-//    val text: String = "",
-//    val position: Offset = Offset.Zero,
-//    val fontSize: Int = 16,
-//    val fontColor: Color = Color.Black,
-//    val fontStyle: FontStyle = FontStyle.Normal,
-//    val fontWeight: FontWeight = FontWeight.Normal,
-//    val fontFamily: FontFamily = FontFamily.Default
-//)

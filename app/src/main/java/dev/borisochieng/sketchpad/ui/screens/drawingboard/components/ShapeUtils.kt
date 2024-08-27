@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -55,8 +56,8 @@ fun MoveableShapeBox(
 	onUpdate: (ShapeProperties) -> Unit = {}
 ) {
 	var offset by remember { mutableStateOf(properties.offset) }
-	var scale by remember { mutableFloatStateOf(properties.scale) }
 	var rotation by remember { mutableFloatStateOf(properties.rotation) }
+	var scale by remember { mutableFloatStateOf(properties.scale) }
 	var shapeIsActive by remember(active) { mutableStateOf(active) }
 
 	Column(
@@ -71,8 +72,8 @@ fun MoveableShapeBox(
 				if (!shapeIsActive) return@pointerInput
 				detectTransformGestures { _, pan, zoom, rotationChange ->
 					offset += pan
-					scale *= zoom
 					rotation += rotationChange
+					scale *= zoom
 				}
 			}
 	) {
@@ -87,7 +88,6 @@ fun MoveableShapeBox(
 						scale = scale, rotation = rotation
 					)
 					if (shapeIsNew) onFinish(shapeProperties) else onUpdate(shapeProperties)
-
 				},
 				onRemove = {
 					shapeIsActive = false
@@ -144,7 +144,9 @@ private fun ActionButtons(
 	onRemove: () -> Unit
 ) {
 	Row(
-		modifier = Modifier.padding(vertical = 6.dp),
+		modifier = Modifier
+			.width(120.dp)
+			.padding(vertical = 6.dp),
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		Icon(

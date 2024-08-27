@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Chat
+import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.TextFields
@@ -40,6 +40,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import dev.borisochieng.sketchpad.R
 import dev.borisochieng.sketchpad.ui.screens.dialog.ColorPickerDialog
+import dev.borisochieng.sketchpad.ui.screens.dialog.ShapePickerDialog
 import dev.borisochieng.sketchpad.ui.screens.dialog.SizePickerDialog
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.utils.DrawMode
 
@@ -50,12 +51,13 @@ fun PaletteMenu(
     selectedColor: Color,
     pencilSize: Float,
     onColorChanged: (Color) -> Unit,
+    onShapePicked: (ShapeOptions) -> Unit,
     onSizeChanged: (Float) -> Unit,
-    onDrawModeChanged: (DrawMode) -> Unit,
-    chatEnabled: () -> Unit
+    onDrawModeChanged: (DrawMode) -> Unit
 ) {
     var currentDrawMode = drawMode
     val openColorPickerDialog = remember { mutableStateOf(false) }
+    val openShapePickerDialog = remember { mutableStateOf(false) }
     val openSizePickerDialog = remember { mutableStateOf(false) }
 
     Row(
@@ -68,12 +70,13 @@ fun PaletteMenu(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        IconButton(onClick = chatEnabled) {
-//            Icon(
-//                imageVector = Icons.AutoMirrored.Outlined.Chat,
-//                contentDescription = "Toggle chat mode"
-//            )
-//        }
+        IconButton(onClick = { openShapePickerDialog.value = true }) {
+            Icon(
+                imageVector = Icons.Outlined.Category,
+                contentDescription = "Shape mode",
+                tint = Color.Black
+            )
+        }
         IconButton(
             onClick = {
                 currentDrawMode =
@@ -139,6 +142,13 @@ fun PaletteMenu(
             onDismiss = { openColorPickerDialog.value = false }
         )
     }
+
+    if (openShapePickerDialog.value) {
+        ShapePickerDialog(
+            onSelected = onShapePicked,
+            onDismiss = { openShapePickerDialog.value = false }
+        )
+    }
 }
 
 @Composable
@@ -153,7 +163,7 @@ fun PaletteTopBar(
     onExportClicked: () -> Unit,
     onBroadCastUrl: () -> Unit,
     onExportClickedAsPdf: () -> Unit,
-    expanded: (Boolean) -> Unit
+    menuExpanded: (Boolean) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -194,18 +204,10 @@ fun PaletteTopBar(
                 contentDescription = "Redo"
             )
         }
-//        IconButton(
-//            onClick = chatEnabled,
-//        ) {
-//            Icon(
-//                Icons.Outlined.Chat,
-//                contentDescription = "Redo"
-//            )
-//        }
         Column {
             IconButton(onClick = {
                 expanded = true
-                expanded(true)
+                menuExpanded(true)
             }) {
                 Icon(
                     painterResource(R.drawable.ic_download),
@@ -216,7 +218,7 @@ fun PaletteTopBar(
                 expanded = expanded,
                 onDismissRequest = {
                     expanded = false
-                    expanded(false)
+                    menuExpanded(false)
                 }
             ) {
                 DropdownMenuItem(
