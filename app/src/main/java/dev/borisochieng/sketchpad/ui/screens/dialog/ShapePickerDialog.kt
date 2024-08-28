@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialogDefaults
@@ -78,13 +79,13 @@ private fun ShapeRow(
 
 			Box(
 				Modifier
+					.size(66.dp)
 					.clip(MaterialTheme.shapes.large)
-					.clickable { onSelected(shape) }
-					.padding(6.dp),
+					.clickable { onSelected(shape) },
 				contentAlignment = Alignment.Center
 			) {
 				CustomShape(
-					shape = shape,
+					shapeOption = shape,
 					borderColor = Color.Black,
 					shapeSize = 60.dp
 				)

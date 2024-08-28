@@ -65,6 +65,8 @@ import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.TextProperties
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.utils.DrawMode
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.utils.ExportOption
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.utils.rememberDrawController
+import dev.borisochieng.sketchpad.utils.SHAPE
+import dev.borisochieng.sketchpad.utils.TEXT
 import dev.borisochieng.sketchpad.utils.VOID_ID
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -95,6 +97,8 @@ fun DrawingBoard(
     var texts by remember { mutableStateOf<List<TextProperties>>(emptyList()) }
     val showNewTextBox = remember { mutableStateOf(false) }
 
+    val absoluteShapes = remember { mutableStateListOf<ShapeProperties>() }
+    var shapes by remember { mutableStateOf<List<ShapeProperties>>(emptyList()) }
     val newShapeBox = remember { mutableStateOf<ShapeOptions?>(null) }
 
     var pencilSize by remember { mutableFloatStateOf(Sizes.Small.strokeWidth) }
@@ -117,7 +121,12 @@ fun DrawingBoard(
             SketchPadActions.UpdateSketch(paths, texts)
         } else {
             openNameSketchDialog.value = false
-            val newSketch = Sketch(name = name, pathList = paths, textList = texts)
+            val newSketch = Sketch(
+                name = name,
+                pathList = paths,
+//                shapeList = shapes,
+                textList = texts
+            )
             SketchPadActions.SaveSketch(newSketch)
         }
         actions(action)
@@ -125,18 +134,19 @@ fun DrawingBoard(
         navigate(Screens.Back)
     }
 
-    val addTextToPaths: (String) -> Unit = { textId ->
-        val textPath = PathProperties(id = textId, textMode = true)
-        paths += textPath
+    val addWidgetToPaths: (String, String) -> Unit = { id, type ->
+        val isShape = type == SHAPE
+        val widgetPath = PathProperties(id = id, shapeMode = isShape, textMode = !isShape)
+        paths += widgetPath
         absolutePaths.clear()
         absolutePaths.addAll(paths)
     }
-    val removeTextFromPaths: (String) -> Unit = { textId ->
-        val existingTextPath = paths.first { it.id == textId }
-        paths -= existingTextPath
-        absolutePaths -= existingTextPath
+    val removeWidgetFromPaths: (String) -> Unit = { id ->
+        val existingWidgetPath = paths.first { it.id == id }
+        paths -= existingWidgetPath
+        absolutePaths -= existingWidgetPath
         // add it to undo/redo history
-        absolutePaths.add(paths.size, existingTextPath)
+        absolutePaths.add(paths.size, existingWidgetPath)
     }
 
     val uiEvents by viewModel.uiEvents.collectAsState(initial = null)
@@ -189,15 +199,25 @@ fun DrawingBoard(
                     }
                 },
                 unUndoClicked = {
-                    if (paths.last().textMode && texts.isNotEmpty()) {
-                        texts -= texts.last()
+                    when {
+                        paths.last().shapeMode && shapes.isNotEmpty() -> {
+                            shapes -= shapes.last()
+                        }
+                        paths.last().textMode && texts.isNotEmpty() -> {
+                            texts -= texts.last()
+                        }
                     }
                     paths -= paths.last()
                 },
                 unRedoClicked = {
                     val nextPath = absolutePaths[paths.size]
-                    if (nextPath.textMode && texts.size != absoluteTexts.size) {
-                        texts += absoluteTexts[texts.size]
+                    when {
+                        nextPath.shapeMode && shapes.size != absoluteShapes.size -> {
+                            shapes += absoluteShapes[shapes.size]
+                        }
+                        nextPath.textMode && texts.size != absoluteTexts.size -> {
+                            texts += absoluteTexts[texts.size]
+                        }
                     }
                     paths += nextPath
                 },
@@ -273,6 +293,10 @@ fun DrawingBoard(
             absolutePaths.clear(); paths = emptyList()
             absolutePaths.addAll(sketch.pathList)
             paths = sketch.pathList
+            // shapes
+//            absoluteShapes.clear(); shapes = emptyList()
+//            absoluteShapes.addAll(sketch.shapeList)
+//            shapes = sketch.shapeList
             // texts
             absoluteTexts.clear(); texts = emptyList()
             absoluteTexts.addAll(sketch.textList)
@@ -340,18 +364,13 @@ fun DrawingBoard(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(Color.White)
-                                        .pointerInput(true) {
-                                            if (drawMode == DrawMode.Touch) return@pointerInput
+                                        .pointerInput(drawMode) {
+                                            if (drawMode !in setOf(DrawMode.Draw, DrawMode.Erase)) return@pointerInput
                                             detectDragGestures { change, dragAmount ->
                                                 change.consume()
                                                 val path = PathProperties(
                                                     id = randomUUID().toString(), //generate id for each new path
-                                                    color = when (drawMode) {
-                                                        DrawMode.Erase -> Color.White
-                                                        DrawMode.Draw -> color
-                                                        else -> Color.Transparent
-                                                    },
-                                                    textMode = false,
+                                                    color = if (drawMode == DrawMode.Erase) Color.White else color,
                                                     start = change.position - dragAmount,
                                                     end = change.position,
                                                     strokeWidth = pencilSize
@@ -374,7 +393,7 @@ fun DrawingBoard(
                                         }
                                 ) {
                                     paths
-                                        .filterNot { it.textMode }
+                                        .filterNot { it.shapeMode || it.textMode }
                                         .forEach { path ->
                                             drawLine(
                                                 color = path.color,
@@ -390,13 +409,13 @@ fun DrawingBoard(
                                     MovableTextBox(
                                         properties = property,
                                         active = false,
-                                        onRemove = { texts -= it; removeTextFromPaths(it.id) },
+                                        onRemove = { texts -= it; removeWidgetFromPaths(it.id) },
                                         onUpdate = { text ->
-                                            removeTextFromPaths(text.id)
+                                            removeWidgetFromPaths(text.id)
                                             val existingText = texts.first { it.id == text.id }
                                             texts -= existingText
                                             texts += text
-                                            addTextToPaths(text.id)
+                                            addWidgetToPaths(text.id, TEXT)
                                         }
                                     )
                                 }
@@ -411,19 +430,39 @@ fun DrawingBoard(
                                             texts += it
                                             absoluteTexts.clear()
                                             absoluteTexts.addAll(texts)
-                                            addTextToPaths(it.id)
+                                            addWidgetToPaths(it.id, TEXT)
                                             showNewTextBox.value = false
                                             drawMode = DrawMode.Draw
                                         }
                                     )
                                 }
 
+                                shapes.forEach { property ->
+                                    MoveableShapeBox(
+                                        properties = property,
+                                        active = false,
+                                        onRemove = { shapes -= it; removeWidgetFromPaths(it.id) },
+                                        onUpdate = { shape ->
+                                            removeWidgetFromPaths(shape.id)
+                                            val existingShape = shapes.first { it.id == shape.id }
+                                            shapes -= existingShape
+                                            shapes += shape
+                                            addWidgetToPaths(shape.id, SHAPE)
+                                        }
+                                    )
+                                }
                                 if (newShapeBox.value != null) {
                                     MoveableShapeBox(
                                         properties = ShapeProperties(shape = newShapeBox.value!!),
                                         active = true,
                                         onRemove = { newShapeBox.value = null },
-                                        onFinish = { newShapeBox.value = null }
+                                        onFinish = {
+                                            shapes += it
+                                            absoluteShapes.clear()
+                                            absoluteShapes.addAll(shapes)
+                                            addWidgetToPaths(it.id, SHAPE)
+                                            newShapeBox.value = null
+                                        }
                                     )
                                 }
 

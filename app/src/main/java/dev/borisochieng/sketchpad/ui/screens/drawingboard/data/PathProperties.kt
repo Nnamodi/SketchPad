@@ -9,6 +9,7 @@ data class PathProperties(
 	val alpha: Float = 1f,
 	val color: Color = Color.Black,
 	val eraseMode: Boolean = false,
+	val shapeMode: Boolean = false,
 	val textMode: Boolean = false,
 	val start: Offset = Offset.Zero,
 	val end: Offset = Offset.Zero,

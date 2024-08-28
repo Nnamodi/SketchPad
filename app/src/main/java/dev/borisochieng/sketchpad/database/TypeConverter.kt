@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.PathProperties
+import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.ShapeProperties
 import dev.borisochieng.sketchpad.ui.screens.drawingboard.data.TextProperties
 import java.util.Date
 
@@ -30,6 +31,19 @@ class TypeConverter {
 		val gson = Gson()
 		val type = object : TypeToken<List<PathProperties>>() {}.type
 		return gson.fromJson(pathJson, type)
+	}
+
+	@TypeConverter
+	fun fromShapes(shapes: List<ShapeProperties>): String {
+		val gson = Gson()
+		return gson.toJson(shapes)
+	}
+
+	@TypeConverter
+	fun toShapes(shapesJson: String): List<ShapeProperties> {
+		val gson = Gson()
+		val type = object : TypeToken<List<ShapeProperties>>() {}.type
+		return gson.fromJson(shapesJson, type)
 	}
 
 	@TypeConverter
